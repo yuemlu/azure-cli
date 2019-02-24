@@ -41,10 +41,10 @@ from azure.cli.core._profile import Profile
 from azure.cli.core.commands.client_factory import get_mgmt_service_client
 from azure.cli.core.keys import is_valid_ssh_rsa_public_key
 from azure.cli.core.util import in_cloud_console, shell_safe_json_parse, truncate_text, sdk_no_wait
-from azure.graphrbac.models import (ApplicationCreateParameters,
+from azure.graphrbac.models import (Application,
                                     PasswordCredential,
                                     KeyCredential,
-                                    ServicePrincipalCreateParameters,
+                                    ServicePrincipal,
                                     GetObjectsParameters,
                                     ResourceAccess, RequiredResourceAccess)
 from azure.mgmt.containerservice.models import ContainerServiceLinuxProfile
@@ -1173,14 +1173,14 @@ def create_application(client, display_name, homepage, identifier_uris,
     password_creds, key_creds = _build_application_creds(password, key_value, key_type,
                                                          key_usage, start_date, end_date)
 
-    app_create_param = ApplicationCreateParameters(available_to_other_tenants=available_to_other_tenants,
-                                                   display_name=display_name,
-                                                   identifier_uris=identifier_uris,
-                                                   homepage=homepage,
-                                                   reply_urls=reply_urls,
-                                                   key_credentials=key_creds,
-                                                   password_credentials=password_creds,
-                                                   required_resource_access=required_resource_accesses)
+    app_create_param = Application(available_to_other_tenants=available_to_other_tenants,
+                                   display_name=display_name,
+                                   identifier_uris=identifier_uris,
+                                   homepage=homepage,
+                                   reply_urls=reply_urls,
+                                   key_credentials=key_creds,
+                                   password_credentials=password_creds,
+                                   required_resource_access=required_resource_accesses)
     try:
         return client.create(app_create_param)
     except GraphErrorException as ex:
@@ -1260,7 +1260,7 @@ def create_service_principal(cli_ctx, identifier, resolve_app=True, rbac_client=
     else:
         app_id = identifier
 
-    return rbac_client.service_principals.create(ServicePrincipalCreateParameters(app_id=app_id, account_enabled=True))
+    return rbac_client.service_principals.create(ServicePrincipal(app_id=app_id, account_enabled=True))
 
 
 def create_role_assignment(cli_ctx, role, assignee, resource_group_name=None, scope=None):

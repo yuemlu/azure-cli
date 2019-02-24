@@ -55,6 +55,11 @@ helps['ad sp create-for-rbac'] = """
           text: az ad sp create-for-rbac --keyvault MyVault --cert CertName
     """
 
+helps['ad sp update'] = """
+    type: command
+    short-summary: update a service principal
+"""
+
 helps['ad sp credential'] = """
     type: group
     short-summary: manage a service principal's credentials.

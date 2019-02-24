@@ -15,8 +15,8 @@ from knack.log import get_logger
 from msrest.serialization import TZ_UTC
 from msrestazure.azure_exceptions import CloudError
 from azure.graphrbac.models.graph_error import GraphErrorException
-from azure.graphrbac.models import (ApplicationCreateParameters,
-                                    ServicePrincipalCreateParameters)
+from azure.graphrbac.models import (Application,
+                                    ServicePrincipal)
 
 from azure.cli.command_modules.ams._client_factory import (_graph_client_factory, _auth_client_factory)
 from azure.cli.command_modules.ams._utils import (_gen_guid, _is_guid)
@@ -215,8 +215,8 @@ def _create_service_principal(
     # retry till server replication is done
     for l in range(0, _RETRY_TIMES):
         try:
-            aad_sp = graph_client.service_principals.create(ServicePrincipalCreateParameters(app_id=app_id,
-                                                                                             account_enabled=True))
+            aad_sp = graph_client.service_principals.create(ServicePrincipal(app_id=app_id,
+                                                                             account_enabled=True))
             break
         except Exception as ex:  # pylint: disable=broad-except
             if l < _RETRY_TIMES and (
@@ -236,12 +236,12 @@ def create_application(client, display_name, homepage, years, password, identifi
                        available_to_other_tenants=False, reply_urls=None):
     password_credential = _build_password_credential(password, years)
 
-    app_create_param = ApplicationCreateParameters(available_to_other_tenants=available_to_other_tenants,
-                                                   display_name=display_name,
-                                                   identifier_uris=identifier_uris,
-                                                   homepage=homepage,
-                                                   reply_urls=reply_urls,
-                                                   password_credentials=[password_credential])
+    app_create_param = Application(available_to_other_tenants=available_to_other_tenants,
+                                   display_name=display_name,
+                                   identifier_uris=identifier_uris,
+                                   homepage=homepage,
+                                   reply_urls=reply_urls,
+                                   password_credentials=[password_credential])
 
     try:
         return client.create(app_create_param)
