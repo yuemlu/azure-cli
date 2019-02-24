@@ -118,7 +118,7 @@ def load_command_table(self, _):
 
     sp_sdk = CliCommandType(
         operations_tmpl='azure.graphrbac.operations.service_principals_operations#ServicePrincipalsOperations.{}',
-        client_factory=get_graph_client_groups
+        client_factory=get_graph_client_service_principals
     )
 
     role_custom = CliCommandType(operations_tmpl='azure.cli.command_modules.role.custom#{}')
@@ -163,7 +163,8 @@ def load_command_table(self, _):
         g.custom_command('delete', 'delete_service_principal')
         g.custom_command('list', 'list_sps', client_factory=get_graph_client_service_principals)
         g.custom_show_command('show', 'show_service_principal', client_factory=get_graph_client_service_principals)
-        g.generic_update_command('update', setter_name='update')
+        g.generic_update_command('update', getter_name='show_service_principal', getter_type=role_custom,
+                                 setter_name='patch_service_principal', setter_type=role_custom)
 
     with self.command_group('ad sp owner', exception_handler=graph_err_handler) as g:
         g.custom_command('list', 'list_service_principal_owners')

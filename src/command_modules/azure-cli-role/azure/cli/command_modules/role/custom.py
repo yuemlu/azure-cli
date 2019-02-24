@@ -824,7 +824,6 @@ def update_application(instance, display_name=None, homepage=None,  # pylint: di
                        identifier_uris=None, password=None, reply_urls=None, key_value=None,
                        key_type=None, key_usage=None, start_date=None, end_date=None, available_to_other_tenants=None,
                        oauth2_allow_implicit_flow=None, required_resource_accesses=None):
-    from azure.cli.core.commands.arm import make_camel_case, make_snake_case
     password_creds, key_creds, required_accesses = None, None, None
     if any([password, key_value]):
         password_creds, key_creds = _build_application_creds(password, key_value, key_type,
@@ -851,6 +850,12 @@ def patch_application(cmd, identifier, parameters):
     graph_client = _graph_client_factory(cmd.cli_ctx)
     object_id = _resolve_application(graph_client.applications, identifier)
     return graph_client.applications.patch(object_id, parameters)
+
+
+def patch_service_principal(cmd, identifier, parameters):
+    graph_client = _graph_client_factory(cmd.cli_ctx)
+    object_id = _resolve_service_principal(graph_client.service_principals, identifier)
+    return graph_client.service_principals.update(object_id, parameters)
 
 
 def _build_application_accesses(required_resource_accesses):
