@@ -12,8 +12,7 @@ import mock
 from azure.cli.core.mock import DummyCli
 
 from azure.mgmt.authorization.models import RoleDefinition, RoleAssignmentCreateParameters
-from azure.graphrbac.models import (Application, ServicePrincipal, GraphErrorException,
-                                    ApplicationUpdateParameters, GetObjectsParameters)
+from azure.graphrbac.models import (Application, ServicePrincipal, GraphErrorException, GetObjectsParameters)
 from azure.cli.command_modules.role.custom import (create_role_definition,
                                                    update_role_definition,
                                                    create_service_principal_for_rbac,
@@ -319,7 +318,7 @@ class TestRoleMocked(unittest.TestCase):
         setattr(app, 'additional_properties', {})
         instance = update_application(app, 'http://any-client',
                                       available_to_other_tenants=True)
-        self.assertTrue(isinstance(instance, ApplicationUpdateParameters))
+        self.assertTrue(isinstance(instance, Application))
         self.assertEqual(instance.available_to_other_tenants, True)
 
     @mock.patch('azure.cli.command_modules.role.custom._graph_client_factory', autospec=True)
