@@ -116,6 +116,11 @@ def load_command_table(self, _):
         client_factory=_msi_user_identities_operations
     )
 
+    sp_sdk = CliCommandType(
+        operations_tmpl='azure.graphrbac.operations.service_principals_operations#ServicePrincipalsOperations.{}',
+        client_factory=get_graph_client_groups
+    )
+
     role_custom = CliCommandType(operations_tmpl='azure.cli.command_modules.role.custom#{}')
 
     with self.command_group('role definition') as g:
@@ -152,12 +157,13 @@ def load_command_table(self, _):
         g.custom_command('add', 'add_application_owner')
         g.custom_command('remove', 'remove_application_owner')
 
-    with self.command_group('ad sp', resource_type=PROFILE_TYPE, exception_handler=graph_err_handler,
+    with self.command_group('ad sp', command_type=sp_sdk, resource_type=PROFILE_TYPE, exception_handler=graph_err_handler,
                             transform=transform_graph_objects_with_cred) as g:
         g.custom_command('create', 'create_service_principal')
         g.custom_command('delete', 'delete_service_principal')
         g.custom_command('list', 'list_sps', client_factory=get_graph_client_service_principals)
         g.custom_show_command('show', 'show_service_principal', client_factory=get_graph_client_service_principals)
+        g.generic_update_command('update', setter_name='update')
 
     with self.command_group('ad sp owner', exception_handler=graph_err_handler) as g:
         g.custom_command('list', 'list_service_principal_owners')

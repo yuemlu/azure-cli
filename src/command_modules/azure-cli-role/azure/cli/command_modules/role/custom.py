@@ -26,9 +26,9 @@ from azure.graphrbac.models import GraphErrorException
 
 from azure.cli.core.util import get_file_json, shell_safe_json_parse
 
-from azure.graphrbac.models import (ApplicationCreateParameters, ApplicationUpdateParameters, PasswordCredential,
+from azure.graphrbac.models import (Application, PasswordCredential,
                                     KeyCredential, UserCreateParameters, PasswordProfile,
-                                    ServicePrincipalCreateParameters, RequiredResourceAccess,
+                                    ServicePrincipal, RequiredResourceAccess,
                                     ResourceAccess, GroupCreateParameters, CheckGroupMembershipParameters)
 
 from ._client_factory import _auth_client_factory, _graph_client_factory
@@ -679,15 +679,15 @@ def create_application(cmd, display_name, homepage=None, identifier_uris=None,
     if required_resource_accesses:
         required_accesses = _build_application_accesses(required_resource_accesses)
 
-    app_patch_param = ApplicationCreateParameters(available_to_other_tenants=available_to_other_tenants,
-                                                  display_name=display_name,
-                                                  identifier_uris=identifier_uris,
-                                                  homepage=homepage,
-                                                  reply_urls=reply_urls,
-                                                  key_credentials=key_creds,
-                                                  password_credentials=password_creds,
-                                                  oauth2_allow_implicit_flow=oauth2_allow_implicit_flow,
-                                                  required_resource_access=required_accesses)
+    app_patch_param = Application(available_to_other_tenants=available_to_other_tenants,
+                                  display_name=display_name,
+                                  identifier_uris=identifier_uris,
+                                  homepage=homepage,
+                                  reply_urls=reply_urls,
+                                  key_credentials=key_creds,
+                                  password_credentials=password_creds,
+                                  oauth2_allow_implicit_flow=oauth2_allow_implicit_flow,
+                                  required_resource_access=required_accesses)
 
     try:
         result = graph_client.applications.create(app_patch_param)
@@ -702,10 +702,8 @@ def create_application(cmd, display_name, homepage=None, identifier_uris=None,
         # AAD graph doesn't have the API to create a native app, aka public client, the recommended hack is
         # to create a web app first, then convert to a native one
         # pylint: disable=protected-access
-        if 'public_client' not in ApplicationUpdateParameters._attribute_map:
-            ApplicationUpdateParameters._attribute_map['public_client'] = {'key': 'publicClient', 'type': 'bool'}
-        app_patch_param = ApplicationUpdateParameters(identifier_uris=[])
-        setattr(app_patch_param, 'public_client', True)
+        app_patch_param = Application(identifier_uris=[])
+        app_patch_param.public_client = True
         graph_client.applications.patch(result.object_id, app_patch_param)
         result = graph_client.applications.get(result.object_id)
 
@@ -765,7 +763,7 @@ def add_permission(cmd, identifier, api, api_permissions):
         required_resource_access = RequiredResourceAccess(resource_app_id=api,
                                                           resource_access=resource_accesses)
         existing.append(required_resource_access)
-    update_parameter = ApplicationUpdateParameters(required_resource_access=existing)
+    update_parameter = Application(required_resource_access=existing)
     graph_client.applications.patch(application.object_id, update_parameter)
     logger.warning('Invoking "az ad app permission grant --id %s --api %s" is needed to make the '
                    'change effective', identifier, api)
@@ -776,7 +774,7 @@ def delete_permission(cmd, identifier, api):
     application = show_application(graph_client.applications, identifier)
     existing_accesses = application.required_resource_access
     existing_accesses = [e for e in existing_accesses if e.resource_app_id != api]
-    update_parameter = ApplicationUpdateParameters(required_resource_access=existing_accesses)
+    update_parameter = Application(required_resource_access=existing_accesses)
     return graph_client.applications.patch(application.object_id, update_parameter)
 
 
@@ -835,23 +833,16 @@ def update_application(instance, display_name=None, homepage=None,  # pylint: di
     if required_resource_accesses:
         required_accesses = _build_application_accesses(required_resource_accesses)
 
-    # Workaround until https://github.com/Azure/azure-rest-api-specs/issues/3437 is fixed
-    def _get_property(name):
-        try:
-            return getattr(instance, make_snake_case(name))
-        except AttributeError:
-            return instance.additional_properties.get(make_camel_case(name), None)
-
-    app_patch_param = ApplicationUpdateParameters(
-        display_name=display_name or _get_property('display_name'),
-        homepage=homepage or _get_property('homepage'),
-        identifier_uris=identifier_uris or _get_property('identifier_uris'),
-        reply_urls=reply_urls or _get_property('reply_urls'),
-        key_credentials=key_creds or None,
-        password_credentials=password_creds or None,
-        available_to_other_tenants=available_to_other_tenants or _get_property('available_to_other_tenants'),
-        required_resource_access=required_accesses or _get_property('required_resource_access'),
-        oauth2_allow_implicit_flow=oauth2_allow_implicit_flow or _get_property('oauth2_allow_implicit_flow'))
+    app_patch_param = Application(
+        display_name=display_name,
+        homepage=homepage,
+        identifier_uris=identifier_uris,
+        reply_urls=reply_urls,
+        key_credentials=key_creds,
+        password_credentials=password_creds,
+        available_to_other_tenants=available_to_other_tenants,
+        required_resource_access=required_accesses,
+        oauth2_allow_implicit_flow=oauth2_allow_implicit_flow)
 
     return app_patch_param
 
@@ -950,7 +941,7 @@ def _create_service_principal(cli_ctx, identifier, resolve_app=True):
         except GraphErrorException:
             pass  # fallback to appid (maybe from an external tenant?)
 
-    return client.service_principals.create(ServicePrincipalCreateParameters(app_id=app_id, account_enabled=True))
+    return client.service_principals.create(ServicePrincipal(app_id=app_id, account_enabled=True))
 
 
 def show_service_principal(client, identifier):
@@ -1446,7 +1437,7 @@ def reset_service_principal_credential(cmd, name, password=None, create_cert=Fal
             custom_key_identifier=custom_key_identifier
         ))
 
-    app_create_param = ApplicationUpdateParameters(password_credentials=app_creds, key_credentials=cert_creds)
+    app_create_param = Application(password_credentials=app_creds, key_credentials=cert_creds)
 
     client.applications.patch(app.object_id, app_create_param)
 
